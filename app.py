@@ -30,32 +30,25 @@ print(f"POSTGRES_URL: {os.getenv('POSTGRES_URL')}")
 
 # Database connection function
 def db_connection():
+    database_url = os.getenv("POSTGRES_URL")
+    parsed_url = urlparse(database_url)
+    conn = psycopg2.connect(
+        host=parsed_url.hostname,
+        port=parsed_url.port,
+        database=parsed_url.path[1:],
+        user=parsed_url.username,
+        password=parsed_url.password,
+        sslmode='require'
+    )
+    return conn
+
+@app.route('/test', methods=['GET'])
+def test_db():
     try:
-        database_url = os.getenv("POSTGRES_URL")
-
-        # Print to debug
-        print(f"Database URL: {database_url}", flush=True)  # Flush ensures logs appear instantly
-
-        if not database_url:
-            raise ValueError("Database URL is missing in environment variables")
-
-        parsed_url = urlparse(database_url)
-
-        conn = psycopg2.connect(
-            host=parsed_url.hostname,
-            port=parsed_url.port,
-            database=parsed_url.path[1:],
-            user=parsed_url.username,
-            password=parsed_url.password,
-            sslmode='require'
-        )
-
-        print("✅ Database connection successful!", flush=True)
-        return conn
-
+        conn = db_connection()
+        return jsonify({"message": "Database connection successful!"}), 200
     except Exception as e:
-        print(f"❌ Error connecting to the database: {e}", flush=True)
-        return None
+        return jsonify({"error": str(e)}), 500
 
 
 
