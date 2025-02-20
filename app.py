@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2 import sql
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 import csv
 from io import StringIO,BytesIO
 
@@ -26,29 +27,31 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Adjust as needed
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Set session lifetime\
 
 # Database connection function
-def db_connection():
+def get_db_connection():
     try:
-        # Use Supabase connection string from environment variable
-        db_url = os.getenv("POSTGRES_URL_NON_POOLING")  # Use non-pooling URL for direct connections
+        database_url = os.getenv("POSTGRES_URL")  # Fetch DB URL from environment
 
-        if not db_url:
-            raise ValueError("Database URL is not set in environment variables")
+        if not database_url:
+            raise ValueError("Database URL is missing in environment variables")
 
-        # Parse the connection string
-        result = urlparse(db_url)
+        # Parse the database URL
+        parsed_url = urlparse(database_url)
 
+        # Establish a PostgreSQL connection
         conn = psycopg2.connect(
-            dbname=result.path[1:],  # Remove leading '/' from the path
-            user=result.username,
-            password=result.password,
-            host=result.hostname,
-            port=result.port
+            host=parsed_url.hostname,
+            port=parsed_url.port,
+            database=parsed_url.path[1:],  # Remove leading '/'
+            user=parsed_url.username,
+            password=parsed_url.password,
+            sslmode='require'  # Ensure SSL encryption
         )
 
         return conn
     except Exception as e:
         print(f"Error connecting to the database: {e}")
         return None
+
 
 # Function to create tables if they don't exist
 def create_tables():
