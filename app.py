@@ -26,6 +26,8 @@ app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Adjust as needed
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Set session lifetime\
 
+print(f"POSTGRES_URL: {os.getenv('POSTGRES_URL')}")
+
 # Database connection function
 def db_connection():
     try:
